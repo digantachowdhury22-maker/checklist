@@ -76,6 +76,9 @@ let databaseReady: Promise<void> | undefined
 export function initializeApi() {
     if (!databaseReady) {
         databaseReady = serverStarted.then(async () => {
+            if (process.env.VERCEL && !process.env.DATABASE_URL?.trim()) {
+                throw new Error('DATABASE_URL_MISSING')
+            }
             await pool.query(`
               CREATE TABLE IF NOT EXISTS releases (
                 id UUID PRIMARY KEY DEFAULT gen_random_uuid(),

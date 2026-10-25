@@ -55,6 +55,9 @@ export default async function handler(request: VercelRequest, response: VercelRe
         return response.status(result.http.status ?? 200).json(result.body.singleResult)
     } catch (error) {
         console.error('GraphQL request failed', error)
-        return response.status(503).json({ errors: [{ message: 'API or database unavailable' }] })
+        const message = process.env.VERCEL && !process.env.DATABASE_URL?.trim()
+            ? 'DATABASE_URL is missing. Add the Neon connection string in Vercel project settings.'
+            : 'Database connection failed. Check DATABASE_URL in Vercel project settings.'
+        return response.status(503).json({ errors: [{ message }] })
     }
 }
