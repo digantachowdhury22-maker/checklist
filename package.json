@@ -1,0 +1,45 @@
+{
+  "name": "checklist",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:api": "tsx watch server/index.ts",
+    "dev:stack": "concurrently -k \"npm:dev:api\" \"npm:dev\"",
+    "build": "tsc -b && npm run typecheck:api && vite build",
+    "lint": "oxlint",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "start": "tsx server/index.ts",
+    "stress": "node scripts/stress-test.mjs",
+    "typecheck:api": "tsc --ignoreConfig --noEmit --module nodenext --moduleResolution nodenext --target ES2022 --esModuleInterop --skipLibCheck server/index.ts server/domain.ts"
+  },
+  "dependencies": {
+    "@apollo/client": "^4.3.5",
+    "@apollo/server": "^5.5.1",
+    "@as-integrations/express5": "^1.1.2",
+    "cors": "^2.8.6",
+    "dotenv": "^18.0.9",
+    "express": "^5.3.0",
+    "graphql": "^16.14.2",
+    "pg": "^8.23.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^24.19.2",
+    "@types/pg": "^8.23.1",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^6.1.2",
+    "concurrently": "^10.0.6",
+    "oxlint": "^1.88.0",
+    "tsx": "^4.23.15",
+    "typescript": "~6.0.3",
+    "vite": "^8.3.4",
+    "vitest": "^5.0.5"
+  }
+}
