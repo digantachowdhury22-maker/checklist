@@ -78,7 +78,17 @@ The checklist definition is code-owned and shared by all releases, so a separate
 - **Checklist:** Eight fixed steps cover scope, code freeze, CI, security, staging, sign-off, production, and rollout monitoring. Keeping definitions in code avoids duplicated step records while satisfying the shared-checklist constraint.
 - **UX:** One dashboard presents a selectable release list and its detail checklist. Completion is immediate; additional information is explicitly saved. Delete requires confirmation. Responsive styling moves the list above release details on mobile.
 - **Local runtime:** Docker Compose runs the API/SPA and PostgreSQL together. The API creates its table on startup for this assessment-sized app. Use a formal migration tool, secrets manager, backups, and stricter CORS before production use.
-- **Deployment:** `render.yaml` describes a Render web service plus managed PostgreSQL. Deployment still requires pushing this repository to GitHub and connecting it to a Render account; no external credentials are available in this workspace.
+- **Deployment:** `render.yaml` describes a Render free Docker web service. It asks for `DATABASE_URL`, which should point to a Neon Free PostgreSQL project; the Blueprint intentionally does not provision paid infrastructure. Free tiers have quotas and cold starts, so this is suitable for a demo, not production.
+
+## Free online deployment
+
+This setup uses Render's free web-service plan and Neon's permanent Free PostgreSQL plan. Render's own free Postgres databases expire after 30 days, so the database is hosted separately on Neon.
+
+1. In Neon, create a project on the **Free** plan and copy the pooled connection string from the dashboard. Keep the string private; it contains database credentials.
+2. In Render, create a **Blueprint** from this GitHub repository. The Blueprint should show one web service on the `free` plan and prompt for `DATABASE_URL`. Paste the Neon connection string. Do not select a paid instance or add paid resources.
+3. Once the deploy completes, open the Render URL and verify `/health`, `/graphql`, and the UI.
+
+Free-tier caveats checked against provider docs on 2026-10-25: Render free web services sleep after 15 minutes without traffic and may take about a minute to wake. Their filesystem is ephemeral, which is why app data belongs in PostgreSQL. Render's free Postgres is limited to 1 GB and expires 30 days after creation, so it is deliberately not used here. Neon Free currently includes up to 100 CU-hours/project/month, 1 GB storage/project, 5 GB public egress/project/month, and suspends its database compute after 5 idle minutes; usage limits may suspend compute or block writes. Watch both provider usage dashboards and do not upgrade resources if you need to keep this at $0. Provider limits and billing rules can change.
 
 ## Stress-test notes
 
