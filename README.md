@@ -72,23 +72,24 @@ The checklist definition is code-owned and shared by all releases, so a separate
 
 ## Design decisions
 
-- **Stack:** Vite + React + TypeScript keeps the SPA small and quick to build. Apollo Client and Apollo Server provide the GraphQL API layer. Express serves the API and the production frontend from one container.
+- **Stack:** Vite + React + TypeScript builds the SPA. Apollo Client and Apollo Server provide the GraphQL API layer. Express is retained for the local Docker backend; Vercel hosts the built SPA and invokes Node functions for GraphQL and health checks.
 - **Persistence:** PostgreSQL stores release metadata and the completed-step ID array. `TIMESTAMPTZ` preserves timezone-aware release dates; IDs are UUIDs.
 - **Status:** Status is computed on the API from completed steps instead of accepting user input or storing a value that could become stale. The assessment mentions `auto` as a possible status, but its explicit status rules define only `planned`, `ongoing`, and `done`, so `auto` is not exposed as a separate state.
 - **Checklist:** Eight fixed steps cover scope, code freeze, CI, security, staging, sign-off, production, and rollout monitoring. Keeping definitions in code avoids duplicated step records while satisfying the shared-checklist constraint.
 - **UX:** One dashboard presents a selectable release list and its detail checklist. Completion is immediate; additional information is explicitly saved. Delete requires confirmation. Responsive styling moves the list above release details on mobile.
 - **Local runtime:** Docker Compose runs the API/SPA and PostgreSQL together. The API creates its table on startup for this assessment-sized app. Use a formal migration tool, secrets manager, backups, and stricter CORS before production use.
-- **Deployment:** `render.yaml` describes a Render free Docker web service. It asks for `DATABASE_URL`, which should point to a Neon Free PostgreSQL project; the Blueprint intentionally does not provision paid infrastructure. Free tiers have quotas and cold starts, so this is suitable for a demo, not production.
+- **Deployment:** Vercel serves the Vite output and runs the API as Node functions; Neon Free provides PostgreSQL. `vercel.json` rewrites `/graphql` and `/health` to the function handlers. The only required production secret is `DATABASE_URL`.
 
-## Free online deployment
+## Vercel deployment
 
-This setup uses Render's free web-service plan and Neon's permanent Free PostgreSQL plan. Render's own free Postgres databases expire after 30 days, so the database is hosted separately on Neon.
+This setup targets Vercel Hobby and Neon's Free PostgreSQL plan. Vercel Hobby is limited to personal, non-commercial projects; use this only if that matches your use case.
 
-1. In Neon, create a project on the **Free** plan and copy the pooled connection string from the dashboard. Keep the string private; it contains database credentials.
-2. In Render, create a **Blueprint** from this GitHub repository. The Blueprint should show one web service on the `free` plan and prompt for `DATABASE_URL`. Paste the Neon connection string. Do not select a paid instance or add paid resources.
-3. Once the deploy completes, open the Render URL and verify `/health`, `/graphql`, and the UI.
+1. In Neon, create a project on the **Free** plan and copy the pooled connection string from the dashboard. Keep it private; it contains database credentials.
+2. In Vercel, import `digantachowdhury22-maker/checklist` from GitHub. Keep the Vite framework preset, build command `npm run build`, and output directory `dist`.
+3. Add `DATABASE_URL` in Vercel's project environment variables using the Neon pooled connection string. Do not add it to source control.
+4. Deploy, then open the Vercel URL and verify `/health`, `/graphql`, and the UI. For local function emulation, install/use the Vercel CLI and run `vercel dev` after configuring `DATABASE_URL`.
 
-Free-tier caveats checked against provider docs on 2026-10-25: Render free web services sleep after 15 minutes without traffic and may take about a minute to wake. Their filesystem is ephemeral, which is why app data belongs in PostgreSQL. Render's free Postgres is limited to 1 GB and expires 30 days after creation, so it is deliberately not used here. Neon Free currently includes up to 100 CU-hours/project/month, 1 GB storage/project, 5 GB public egress/project/month, and suspends its database compute after 5 idle minutes; usage limits may suspend compute or block writes. Watch both provider usage dashboards and do not upgrade resources if you need to keep this at $0. Provider limits and billing rules can change.
+Free-tier caveats checked against provider docs on 2026-10-25: Vercel Hobby usage is capped (including function invocations/compute and transfer) and is for personal, non-commercial use. Hobby usage limits pause features until the allowance resets. Neon Free currently includes up to 100 CU-hours/project/month, 1 GB storage/project, and 5 GB public egress/project/month; its database compute suspends after 5 idle minutes. Hitting Neon usage limits can suspend compute or block writes. There are no overages on Vercel Hobby, but check provider billing and usage dashboards and do not upgrade resources if you need to keep this at $0. Provider limits and billing rules can change.
 
 ## Stress-test notes
 
@@ -113,4 +114,4 @@ Measured on Docker Desktop 4.96.3 / Docker Engine 29.9.2, using the `node:22-alp
 
 No drops occurred through 800 workers; drops first appeared at 1,200 workers, where 1,316 of 10,429 requests failed. The 1,600-worker run had fewer drops proportionally, so this is a noisy overload signal, not a stable monotonic capacity threshold. Latency was already substantially degraded at 800 workers. Treat this only as a local test observation, not a claim about simultaneous users or hosted capacity. Repeat with a controlled load-testing tool and the deployed service for an assessment-grade capacity result.
 
-The assessment asks for a comparison to an “initial LLM implementation.” This project contains no LLM-based implementation or baseline, so there is no valid LLM-versus-optimized delta to claim. The stress results above measure only the current deterministic GraphQL API. Likewise, publishing to GitHub/Render and recording a face-and-voice demo require account access and an actual presenter; these steps must be completed by the assessment owner.
+The assessment asks for a comparison to an “initial LLM implementation.” This project contains no LLM-based implementation or baseline, so there is no valid LLM-versus-optimized delta to claim. The stress results above measure only the current deterministic GraphQL API. Recording the required face-and-voice demo still requires the assessment owner as presenter.
